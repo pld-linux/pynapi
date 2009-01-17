@@ -91,7 +91,7 @@ for file in files:
     if len(file) > 4:
         vfile = file[:-4] + '.txt'
 
-    if skip and os.path.exists(file):
+    if skip and os.path.exists(vfile):
         continue
 
     print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
