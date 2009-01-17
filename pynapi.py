@@ -19,6 +19,7 @@ import urllib
 import subprocess
 import tempfile
 import os
+import getopt
 
 napipass = 'iBlm8NTigvru0Jr0'
 
@@ -41,14 +42,35 @@ def f(z):
 
 	return ''.join(b)
 
-if len(sys.argv) == 1:
-    print >> sys.stderr, "Usage: %s <file|dir> [<file|dir> ...]" % sys.argv[0]
+def usage():
+    print >> sys.stderr, "Usage: %s [-s] <file|dir> [<file|dir> ...]" % sys.argv[0]
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "hs", ["help", "skip"])
+except getopt.GetoptError, err:
+    print str(err)
+    usage()
     sys.exit(2)
+
+output = None
+verbose = False
+skip = False
+for o, a in opts:
+    if o == "-v":
+        verbose = True
+    elif o in ("-h", "--help"):
+        usage()
+        sys.exit()
+    elif o in ("-s", "--skip"):
+        skip = True
+    else:
+        print >> sys.stderr, "%s: unhandled option" % prog
+        sys.exit(1)
 
 print >> sys.stderr, "%s: Finding video files..." % prog
 
 files = []
-for arg in sys.argv[1:]:
+for arg in args:
     if os.path.isdir(arg):
         for dirpath, dirnames, filenames in os.walk(arg, topdown=False):
             for file in filenames:
@@ -65,11 +87,14 @@ i = 0
 for file in files:
     i += 1
 
-    print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
-
     vfile = file + '.txt'
     if len(file) > 4:
         vfile = file[:-4] + '.txt'
+
+    if skip and os.path.exists(file):
+        continue
+
+    print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
     d = hashlib.md5()
     try:
