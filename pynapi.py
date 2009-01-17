@@ -65,18 +65,28 @@ i = 0
 for file in files:
     i += 1
 
-    print >> sys.stderr, "%s: %d/%d: Fetching subtitles for %s" % (prog, i, i_total, file)
+    print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
     vfile = file + '.txt'
     if len(file) > 4:
         vfile = file[:-4] + '.txt'
 
     d = hashlib.md5()
-    d.update(open(file).read(10485760))
+    try:
+        d.update(open(file).read(10485760))
+    except (IOError, OSError), e:
+        print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
+        continue
 
-    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=PL&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
-    sub = urllib.urlopen(url)
-    sub = sub.read()
+    url = "http://napiprojxekt.pl/unit_napisy/dl.php?l=PL&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
+
+    sub = None
+    try:
+        sub = urllib.urlopen(url)
+        sub = sub.read()
+    except (IOError, OSError), e:
+        print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+        continue
 
     # XXX: is this standard way for napiproject to signalize error?
     if sub == 'NPc0':
@@ -88,10 +98,15 @@ for file in files:
     fp.write(sub)
     fp.close()
 
-    cmd = ['/usr/bin/7z', 'x', '-y', '-so', '-p' + napipass, tfp]
-    sa = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-    (so, se) = sa.communicate(sub)
-    retcode = sa.returncode
+    try:
+        cmd = ['/usr/bin/7z', 'x', '-y', '-so', '-p' + napipass, tfp]
+        sa = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        (so, se) = sa.communicate(sub)
+        retcode = sa.returncode
+    except OSError, e:
+        se = e
+        retcode = True
+
     os.unlink(tfp)
 
     if retcode:
