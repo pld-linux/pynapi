@@ -1,17 +1,5 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-#
-# reversed napi 0.16.3.1
-# by gim,krzynio,dosiu,hash 2oo8.
-# more pythonization by arekm
-#
-# last modified: 6-I-2oo8
-#
-# 4pc0h f0rc3
-#
-# do dzialania potrzebny jest p7zip-full (tak sie nazywa paczka w debianie)
-#
-# POZDRAWIAMY NASZYCH FANOW!
 
 import hashlib
 import sys
