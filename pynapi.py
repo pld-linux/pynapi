@@ -45,19 +45,28 @@ if len(sys.argv) == 1:
     print >> sys.stderr, "Usage: %s <file|dir> [<file|dir> ...]" % sys.argv[0]
     sys.exit(2)
 
+print >> sys.stderr, "%s: Finding video files..." % prog
+
 files = []
 for arg in sys.argv[1:]:
     if os.path.isdir(arg):
-        for dirpath, dirnames, filenames in os.walk(arg):
+        for dirpath, dirnames, filenames in os.walk(arg, topdown=False):
             for file in filenames:
                 if file.lower().endswith('.avi'):
                     files.append(os.path.join(dirpath, file))
     else:
         files.append(arg)
 
-print "Processing %d files..." % len(files)
+files.sort()
+
+i_total = len(files)
+i = 0
 
 for file in files:
+    i += 1
+
+    print >> sys.stderr, "%s: %d/%d: Fetching subtitles for %s" % (prog, i, i_total, file)
+
     vfile = file + '.txt'
     if len(file) > 4:
         vfile = file[:-4] + '.txt'
@@ -71,7 +80,7 @@ for file in files:
 
     # XXX: is this standard way for napiproject to signalize error?
     if sub == 'NPc0':
-        print >> sys.stderr, "%s: Subtitle for `%s' not found" % (prog, file)
+        print >> sys.stderr, "%s: %d/%d: Subtitle not found" % (prog, i, i_total)
         continue
 
     fp = tempfile.NamedTemporaryFile('wb', suffix=".7z", delete=False)
@@ -86,7 +95,7 @@ for file in files:
     os.unlink(tfp)
 
     if retcode:
-        print >> sys.stderr, "%s: Subtitle for `%s' decompression failed: %s" % (prog, file, se)
+        print >> sys.stderr, "%s: %d/%d: Subtitle decompression failed: %s" % (prog, i, i_total, se)
         continue
 
     fp = open(vfile, 'w')
@@ -94,4 +103,4 @@ for file in files:
     fp.close()
     os.chmod(vfile, 0644)
 
-    print >> sys.stderr, "%s: Wrote `%s' (%d bytes)" % (prog, vfile, len(so))
+    print >> sys.stderr, "%s: %d/%d: Stored (%d bytes)" % (prog, i, i_total, len(so))
