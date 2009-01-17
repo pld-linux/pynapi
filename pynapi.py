@@ -25,7 +25,7 @@ napipass = 'iBlm8NTigvru0Jr0'
 
 prog = os.path.basename(sys.argv[0])
 
-video_files = [ 'avi', 'mkv', 'mpg' ]
+video_files = [ 'asf', 'avi', 'divx', 'mkv', 'mp4', 'mpeg', 'mpg', 'ogm', 'rm', 'rmvb', 'wmv' ]
 
 def f(z):
 	idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
