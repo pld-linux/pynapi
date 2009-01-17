@@ -106,11 +106,17 @@ for file in files:
     url = "http://napiprojekt.pl/unit_napisy/dl.php?l=PL&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
 
     sub = None
+    http_code = None
     try:
         sub = urllib.urlopen(url)
+        http_code = sub.getcode() 
         sub = sub.read()
     except (IOError, OSError), e:
         print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+        continue
+
+    if http_code != 200:
+        print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
         continue
 
     # XXX: is this standard way for napiproject to signalize error?
