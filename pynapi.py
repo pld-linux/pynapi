@@ -80,7 +80,7 @@ for file in files:
 
     # XXX: is this standard way for napiproject to signalize error?
     if sub == 'NPc0':
-        print >> sys.stderr, "%s: %d/%d: Subtitle not found" % (prog, i, i_total)
+        print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
         continue
 
     fp = tempfile.NamedTemporaryFile('wb', suffix=".7z", delete=False)
@@ -95,7 +95,7 @@ for file in files:
     os.unlink(tfp)
 
     if retcode:
-        print >> sys.stderr, "%s: %d/%d: Subtitle decompression failed: %s" % (prog, i, i_total, se)
+        print >> sys.stderr, "%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se)
         continue
 
     fp = open(vfile, 'w')
@@ -103,4 +103,4 @@ for file in files:
     fp.close()
     os.chmod(vfile, 0644)
 
-    print >> sys.stderr, "%s: %d/%d: Stored (%d bytes)" % (prog, i, i_total, len(so))
+    print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
