@@ -49,11 +49,13 @@ files = []
 for arg in sys.argv[1:]:
     if os.path.isdir(arg):
         for dirpath, dirnames, filenames in os.walk(arg):
-            for f in filenames:
-                if f.lower().endswith('.avi'):
-                    files.append(os.path.join(dirpath, f))
+            for file in filenames:
+                if file.lower().endswith('.avi'):
+                    files.append(os.path.join(dirpath, file))
     else:
         files.append(arg)
+
+print "Processing %d files..." % len(files)
 
 for file in files:
     vfile = file + '.txt'
@@ -63,8 +65,8 @@ for file in files:
     d = hashlib.md5()
     d.update(open(file).read(10485760))
 
-    str = "http://napiprojekt.pl/unit_napisy/dl.php?l=PL&f="+d.hexdigest()+"&t="+f(d.hexdigest())+"&v=other&kolejka=false&nick=&pass=&napios="+os.name
-    sub = urllib.urlopen(str)
+    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=PL&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
+    sub = urllib.urlopen(url)
     sub = sub.read()
 
     # XXX: is this standard way for napiproject to signalize error?
