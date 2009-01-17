@@ -5,7 +5,6 @@ Release:	1
 License:	GPL
 Group:		Applications/Multimedia
 Source0:	pynapi.py
-# Source0-md5:	2565af2e49a97a2016d055e051fc068e
 BuildRequires:	python-modules
 Requires:	p7zip
 %pyrequires_eq  python-modules
