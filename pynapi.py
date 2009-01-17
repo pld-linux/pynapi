@@ -25,6 +25,8 @@ napipass = 'iBlm8NTigvru0Jr0'
 
 prog = os.path.basename(sys.argv[0])
 
+video_files = [ 'avi', 'mkv', 'mpg' ]
+
 def f(z):
 	idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
 	mul = [   2,   2,    5,   4,   3 ]
@@ -74,7 +76,7 @@ for arg in args:
     if os.path.isdir(arg):
         for dirpath, dirnames, filenames in os.walk(arg, topdown=False):
             for file in filenames:
-                if file.lower().endswith('.avi'):
+                if file[-4:-3] == '.' and file.lower()[-3:] in video_files:
                     files.append(os.path.join(dirpath, file))
     else:
         files.append(arg)
