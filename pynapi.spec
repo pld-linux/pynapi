@@ -6,6 +6,7 @@ License:	GPL
 Group:		Applications/Multimedia
 Source0:	pynapi.py
 BuildRequires:	python-modules
+BuildRequires:	rpm-pythonprov
 Requires:	p7zip
 %pyrequires_eq  python-modules
 BuildArch:	noarch
