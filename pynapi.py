@@ -138,8 +138,7 @@ for file in files:
         print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
         continue
 
-    # XXX: is this standard way for napiproject to signalize error?
-    if sub in ('NPc0', 'NPc1'):
+    if sub.startswith('NPc'):
         print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
         continue
 
