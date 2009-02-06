@@ -18,13 +18,17 @@
 # 
 
 
-import hashlib
 import sys
 import urllib
 import subprocess
 import tempfile
 import os
 import getopt
+
+try:
+    from hashlib import md5 as md5
+except ImportError:
+    from md5 import md5
 
 napipass = 'iBlm8NTigvru0Jr0'
 
@@ -111,7 +115,7 @@ for file in files:
 
     print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
-    d = hashlib.md5()
+    d = md5()
     try:
         d.update(open(file).read(10485760))
     except (IOError, OSError), e:
