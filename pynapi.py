@@ -118,7 +118,7 @@ for file in files:
         print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
         continue
 
-    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
+    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=pynapi&kolejka=false&nick=&pass=&napios=" + os.name
 
     sub = None
     http_code = None
