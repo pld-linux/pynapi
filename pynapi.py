@@ -1,5 +1,22 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
+#
+#  Copyright (C) 2009 Arkadiusz Miśkiewicz <arekm@pld-linux.org>
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 
+
 
 import hashlib
 import sys
@@ -14,6 +31,7 @@ napipass = 'iBlm8NTigvru0Jr0'
 prog = os.path.basename(sys.argv[0])
 
 video_files = [ 'asf', 'avi', 'divx', 'mkv', 'mp4', 'mpeg', 'mpg', 'ogm', 'rm', 'rmvb', 'wmv' ]
+languages = { 'pl': 'PL', 'en': 'ENG' }
 
 def f(z):
 	idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
@@ -33,10 +51,10 @@ def f(z):
 	return ''.join(b)
 
 def usage():
-    print >> sys.stderr, "Usage: %s [-s] <file|dir> [<file|dir> ...]" % sys.argv[0]
+    print >> sys.stderr, "Usage: %s [-l <lang> ] [-s] <file|dir> [<file|dir> ...]" % sys.argv[0]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "hs", ["help", "skip"])
+    opts, args = getopt.getopt(sys.argv[1:], "hl:s", ["help", "lang", "skip"])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -45,6 +63,7 @@ except getopt.GetoptError, err:
 output = None
 verbose = False
 skip = False
+lang = 'pl'
 for o, a in opts:
     if o == "-v":
         verbose = True
@@ -53,11 +72,17 @@ for o, a in opts:
         sys.exit()
     elif o in ("-s", "--skip"):
         skip = True
+    elif o in ("-l", "--lang"):
+        if a in languages:
+            lang = a
+        else:
+            print >> sys.stderr, "%s: unsupported language `%s'. Supported languages: %s" % (prog, a, str(languages.keys()))
+            sys.exit(1)
     else:
         print >> sys.stderr, "%s: unhandled option" % prog
         sys.exit(1)
 
-print >> sys.stderr, "%s: Finding video files..." % prog
+print >> sys.stderr, "%s: Subtitles language `%s'. Finding video files..." % (prog, lang)
 
 files = []
 for arg in args:
@@ -93,7 +118,7 @@ for file in files:
         print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
         continue
 
-    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=PL&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
+    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
 
     sub = None
     http_code = None
