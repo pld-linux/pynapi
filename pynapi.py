@@ -118,7 +118,7 @@ for file in files:
         print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
         continue
 
-    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=pynapi&kolejka=false&nick=&pass=&napios=" + os.name
+    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
 
     sub = None
     http_code = None
@@ -135,7 +135,7 @@ for file in files:
         continue
 
     # XXX: is this standard way for napiproject to signalize error?
-    if sub == 'NPc0':
+    if sub in ('NPc0', 'NPc1'):
         print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
         continue
 
