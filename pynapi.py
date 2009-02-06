@@ -55,7 +55,9 @@ def f(z):
 	return ''.join(b)
 
 def usage():
-    print >> sys.stderr, "Usage: %s [-l <lang> ] [-s] <file|dir> [<file|dir> ...]" % sys.argv[0]
+    print >> sys.stderr, "Usage: %s [-l|lang <lang> ] [-n|nobackup] <file|dir> [<file|dir> ...]" % sys.argv[0]
+    print >> sys.stderr, "pynapi $Revision$"
+    print >> sys.stderr, "Report bugs to <arekm@pld-linux.org>."
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "hl:s", ["help", "lang", "skip"])
@@ -66,7 +68,7 @@ except getopt.GetoptError, err:
 
 output = None
 verbose = False
-skip = False
+nobackup = False
 lang = 'pl'
 for o, a in opts:
     if o == "-v":
@@ -74,8 +76,8 @@ for o, a in opts:
     elif o in ("-h", "--help"):
         usage()
         sys.exit()
-    elif o in ("-s", "--skip"):
-        skip = True
+    elif o in ("-n", "--nobackup"):
+        nobackup = True
     elif o in ("-l", "--lang"):
         if a in languages:
             lang = a
@@ -110,8 +112,13 @@ for file in files:
     if len(file) > 4:
         vfile = file[:-4] + '.txt'
 
-    if skip and os.path.exists(vfile):
-        continue
+    if not nobackup and os.path.exists(vfile):
+        vfile_bak = vfile + '-bak'
+        try:
+            os.rename(vfile, vfile_bak)
+        except (IOError, OSError), e:
+            print sys.stderr, "%s: skipping due to backup of `%s' as `%s' failure: %s" % (prog, vfile, vfile_bak, e)
+            continue
 
     print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
