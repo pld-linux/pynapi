@@ -150,10 +150,9 @@ for file in files:
         print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
         continue
 
-    fp = tempfile.NamedTemporaryFile('wb', suffix=".7z", delete=False)
+    fp = tempfile.NamedTemporaryFile('wb', suffix=".7z")
     tfp = fp.name
     fp.write(sub)
-    fp.close()
 
     try:
         cmd = ['/usr/bin/7z', 'x', '-y', '-so', '-p' + napipass, tfp]
@@ -164,7 +163,7 @@ for file in files:
         se = e
         retcode = True
 
-    os.unlink(tfp)
+    fp.close()
 
     if retcode:
         print >> sys.stderr, "%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se)
