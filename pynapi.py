@@ -132,7 +132,7 @@ for file in files:
     url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
 
     sub = None
-    http_code = "(unknown)"
+    http_code = 200
     try:
         sub = urllib.urlopen(url)
         if hasattr(sub, 'getcode'):
