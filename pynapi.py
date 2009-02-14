@@ -38,141 +38,153 @@ video_files = [ 'asf', 'avi', 'divx', 'mkv', 'mp4', 'mpeg', 'mpg', 'ogm', 'rm', 
 languages = { 'pl': 'PL', 'en': 'ENG' }
 
 def f(z):
-	idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
-	mul = [   2,   2,    5,   4,   3 ]
-	add = [   0, 0xd, 0x10, 0xb, 0x5 ]
+    idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
+    mul = [   2,   2,    5,   4,   3 ]
+    add = [   0, 0xd, 0x10, 0xb, 0x5 ]
 
-	b = []
-	for i in xrange(len(idx)):
-		a = add[i]
-		m = mul[i]
-		i = idx[i]
+    b = []
+    for i in xrange(len(idx)):
+        a = add[i]
+        m = mul[i]
+        i = idx[i]
 
-		t = a + int(z[i], 16)
-		v = int(z[t:t+2], 16)
-		b.append( ("%x" % (v*m))[-1] )
+        t = a + int(z[i], 16)
+        v = int(z[t:t+2], 16)
+        b.append( ("%x" % (v*m))[-1] )
 
-	return ''.join(b)
+    return ''.join(b)
 
 def usage():
-    print >> sys.stderr, "Usage: %s [-l|lang <lang> ] [-n|nobackup] <file|dir> [<file|dir> ...]" % sys.argv[0]
+    print >> sys.stderr, "Usage: %s [-l|lang <lang> ] [-n|nobackup] <file|dir> [<file|dir> ...]" % prog
     print >> sys.stderr, "pynapi $Revision$"
     print >> sys.stderr, "Report bugs to <arekm@pld-linux.org>."
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "hl:s", ["help", "lang", "skip"])
-except getopt.GetoptError, err:
-    print str(err)
-    usage()
-    sys.exit(2)
+def main(argv=sys.argv):
 
-output = None
-verbose = False
-nobackup = False
-lang = 'pl'
-for o, a in opts:
-    if o == "-v":
-        verbose = True
-    elif o in ("-h", "--help"):
+    try:
+        opts, args = getopt.getopt(argv[1:], "hl:s", ["help", "lang", "skip"])
+    except getopt.GetoptError, err:
+        print str(err)
         usage()
-        sys.exit()
-    elif o in ("-n", "--nobackup"):
-        nobackup = True
-    elif o in ("-l", "--lang"):
-        if a in languages:
-            lang = a
+	return 2
+
+    output = None
+    verbose = False
+    nobackup = False
+    lang = 'pl'
+    for o, a in opts:
+        if o == "-v":
+            verbose = True
+        elif o in ("-h", "--help"):
+            usage()
+	    return 0
+        elif o in ("-n", "--nobackup"):
+            nobackup = True
+        elif o in ("-l", "--lang"):
+            if a in languages:
+                lang = a
+            else:
+                print >> sys.stderr, "%s: unsupported language `%s'. Supported languages: %s" % (prog, a, str(languages.keys()))
+		return 1
         else:
-            print >> sys.stderr, "%s: unsupported language `%s'. Supported languages: %s" % (prog, a, str(languages.keys()))
-            sys.exit(1)
-    else:
-        print >> sys.stderr, "%s: unhandled option" % prog
-        sys.exit(1)
+            print >> sys.stderr, "%s: unhandled option" % prog
+	    return 1
 
-print >> sys.stderr, "%s: Subtitles language `%s'. Finding video files..." % (prog, lang)
+    print >> sys.stderr, "%s: Subtitles language `%s'. Finding video files..." % (prog, lang)
 
-files = []
-for arg in args:
-    if os.path.isdir(arg):
-        for dirpath, dirnames, filenames in os.walk(arg, topdown=False):
-            for file in filenames:
-                if file[-4:-3] == '.' and file.lower()[-3:] in video_files:
-                    files.append(os.path.join(dirpath, file))
-    else:
-        files.append(arg)
+    files = []
+    for arg in args:
+        if os.path.isdir(arg):
+            for dirpath, dirnames, filenames in os.walk(arg, topdown=False):
+                for file in filenames:
+                    if file[-4:-3] == '.' and file.lower()[-3:] in video_files:
+                        files.append(os.path.join(dirpath, file))
+        else:
+            files.append(arg)
 
-files.sort()
+    files.sort()
 
-i_total = len(files)
-i = 0
+    i_total = len(files)
+    i = 0
 
-for file in files:
-    i += 1
+    for file in files:
+        i += 1
 
-    vfile = file + '.txt'
-    if len(file) > 4:
-        vfile = file[:-4] + '.txt'
+        vfile = file + '.txt'
+        if len(file) > 4:
+            vfile = file[:-4] + '.txt'
 
-    if not nobackup and os.path.exists(vfile):
-        vfile_bak = vfile + '-bak'
+        if not nobackup and os.path.exists(vfile):
+            vfile_bak = vfile + '-bak'
+            try:
+                os.rename(vfile, vfile_bak)
+            except (IOError, OSError), e:
+                print sys.stderr, "%s: skipping due to backup of `%s' as `%s' failure: %s" % (prog, vfile, vfile_bak, e)
+                continue
+
+        print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
+
+        d = md5()
         try:
-            os.rename(vfile, vfile_bak)
+            d.update(open(file).read(10485760))
         except (IOError, OSError), e:
-            print sys.stderr, "%s: skipping due to backup of `%s' as `%s' failure: %s" % (prog, vfile, vfile_bak, e)
+            print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
             continue
 
-    print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
+        url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
 
-    d = md5()
+        sub = None
+        http_code = 200
+        try:
+            sub = urllib.urlopen(url)
+            if hasattr(sub, 'getcode'):
+                http_code = sub.getcode() 
+            sub = sub.read()
+        except (IOError, OSError), e:
+            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+            continue
+
+        if http_code != 200:
+            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
+            continue
+
+        if sub.startswith('NPc'):
+            print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
+            continue
+
+        fp = tempfile.NamedTemporaryFile('wb', suffix=".7z")
+        tfp = fp.name
+        fp.write(sub)
+        fp.flush()
+
+        try:
+            cmd = ['/usr/bin/7z', 'x', '-y', '-so', '-p' + napipass, tfp]
+            sa = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+            (so, se) = sa.communicate(sub)
+            retcode = sa.returncode
+        except OSError, e:
+            se = e
+            retcode = True
+
+        fp.close()
+
+        if retcode:
+            print >> sys.stderr, "%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se)
+            continue
+
+        fp = open(vfile, 'w')
+        fp.write(so)
+        fp.close()
+        os.chmod(vfile, 0644)
+
+        print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
+
+    return 0
+
+if __name__ == "__main__":
+    ret = None
     try:
-        d.update(open(file).read(10485760))
-    except (IOError, OSError), e:
-        print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
-        continue
-
-    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
-
-    sub = None
-    http_code = 200
-    try:
-        sub = urllib.urlopen(url)
-        if hasattr(sub, 'getcode'):
-            http_code = sub.getcode() 
-        sub = sub.read()
-    except (IOError, OSError), e:
-        print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
-        continue
-
-    if http_code != 200:
-        print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
-        continue
-
-    if sub.startswith('NPc'):
-        print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
-        continue
-
-    fp = tempfile.NamedTemporaryFile('wb', suffix=".7z")
-    tfp = fp.name
-    fp.write(sub)
-    fp.flush()
-
-    try:
-        cmd = ['/usr/bin/7z', 'x', '-y', '-so', '-p' + napipass, tfp]
-        sa = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-        (so, se) = sa.communicate(sub)
-        retcode = sa.returncode
-    except OSError, e:
-        se = e
-        retcode = True
-
-    fp.close()
-
-    if retcode:
-        print >> sys.stderr, "%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se)
-        continue
-
-    fp = open(vfile, 'w')
-    fp.write(so)
-    fp.close()
-    os.chmod(vfile, 0644)
-
-    print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
+	ret = main()
+    except (KeyboardInterrupt, SystemExit):
+	print >> sys.stderr, "%s: Interrupted, aborting." % prog
+    sys.exit(ret)
