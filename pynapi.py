@@ -132,10 +132,11 @@ for file in files:
     url = "http://napiprojekt.pl/unit_napisy/dl.php?l=" + languages[lang] + "&f=" + d.hexdigest() + "&t=" + f(d.hexdigest()) + "&v=other&kolejka=false&nick=&pass=&napios=" + os.name
 
     sub = None
-    http_code = None
+    http_code = "(unknown)"
     try:
         sub = urllib.urlopen(url)
-        http_code = sub.getcode() 
+        if hasattr(sub, 'getcode'):
+            http_code = sub.getcode() 
         sub = sub.read()
     except (IOError, OSError), e:
         print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
