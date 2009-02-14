@@ -1,6 +1,6 @@
 Summary:	pynapi - Movie Subtitle Downloader
 Name:		pynapi
-Version:	0.7
+Version:	0.8
 Release:	1
 License:	GPL v3+
 Group:		Applications/Multimedia
