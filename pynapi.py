@@ -153,6 +153,7 @@ for file in files:
     fp = tempfile.NamedTemporaryFile('wb', suffix=".7z")
     tfp = fp.name
     fp.write(sub)
+    fp.flush()
 
     try:
         cmd = ['/usr/bin/7z', 'x', '-y', '-so', '-p' + napipass, tfp]
