@@ -176,7 +176,6 @@ def main(argv=sys.argv):
         fp = open(vfile, 'w')
         fp.write(so)
         fp.close()
-        os.chmod(vfile, 0644)
 
         print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
 
