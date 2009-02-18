@@ -15,7 +15,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 
 import sys
@@ -149,7 +149,7 @@ def main(argv=sys.argv):
             continue
 
         url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=other&kolejka=false&nick=&pass=&napios=%s" % \
-			(languages[lang], d.hexdigest(), f(d.hexdigest()), os.name)
+            (languages[lang], d.hexdigest(), f(d.hexdigest()), os.name)
 
         sub = None
         http_code = 200
