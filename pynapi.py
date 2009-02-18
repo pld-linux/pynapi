@@ -55,40 +55,52 @@ def f(z):
     return ''.join(b)
 
 def usage():
-    print >> sys.stderr, "Usage: %s [-l|lang <lang> ] [-n|nobackup] <file|dir> [<file|dir> ...]" % prog
+    print >> sys.stderr, "Usage: %s [OPTIONS]... [FILE|DIR]..." % prog
+    print >> sys.stderr, "Find video files and download matching subtitles from napiprojekt server."
+    print >> sys.stderr
+    print >> sys.stderr, "Supported options:"
+    print >> sys.stderr, "     -h, --help            display this help and exit"
+    print >> sys.stderr, "     -l, --lang=LANG       subtitles language"
+    print >> sys.stderr, "     -n, --nobackup        make no backup when in update mode"
+    print >> sys.stderr, "     -u, --update          fetch new and also update existing subtitles"
+    print >> sys.stderr
     print >> sys.stderr, "pynapi $Revision$"
+    print >> sys.stderr
     print >> sys.stderr, "Report bugs to <arekm@pld-linux.org>."
 
 def main(argv=sys.argv):
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hl:s", ["help", "lang", "skip"])
+        opts, args = getopt.getopt(argv[1:], "hl:nu", ["help", "lang", "nobackup", "update"])
     except getopt.GetoptError, err:
         print str(err)
         usage()
-	return 2
+        return 2
 
     output = None
     verbose = False
     nobackup = False
+    update = False
     lang = 'pl'
     for o, a in opts:
         if o == "-v":
             verbose = True
         elif o in ("-h", "--help"):
             usage()
-	    return 0
-        elif o in ("-n", "--nobackup"):
-            nobackup = True
+            return 0
         elif o in ("-l", "--lang"):
             if a in languages:
                 lang = a
             else:
                 print >> sys.stderr, "%s: unsupported language `%s'. Supported languages: %s" % (prog, a, str(languages.keys()))
-		return 1
+                return 1
+        elif o in ("-n", "--nobackup"):
+            nobackup = True
+        elif o in ("-u", "--update"):
+            update = True
         else:
             print >> sys.stderr, "%s: unhandled option" % prog
-	    return 1
+            return 1
 
     print >> sys.stderr, "%s: Subtitles language `%s'. Finding video files..." % (prog, lang)
 
@@ -114,13 +126,18 @@ def main(argv=sys.argv):
         if len(file) > 4:
             vfile = file[:-4] + '.txt'
 
+        if not update and os.path.exists(vfile):
+            continue
+
         if not nobackup and os.path.exists(vfile):
             vfile_bak = vfile + '-bak'
             try:
                 os.rename(vfile, vfile_bak)
             except (IOError, OSError), e:
-                print sys.stderr, "%s: skipping due to backup of `%s' as `%s' failure: %s" % (prog, vfile, vfile_bak, e)
+                print >> sys.stderr, "%s: Skipping due to backup of `%s' as `%s' failure: %s" % (prog, vfile, vfile_bak, e)
                 continue
+            else:
+                print >> sys.stderr, "%s: Old subtitle backed up as `%s'" % (prog, vfile_bak)
 
         print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
@@ -131,7 +148,7 @@ def main(argv=sys.argv):
             print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
             continue
 
-	url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=other&kolejka=false&nick=&pass=&napios=%s" % \
+        url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=other&kolejka=false&nick=&pass=&napios=%s" % \
 			(languages[lang], d.hexdigest(), f(d.hexdigest()), os.name)
 
         sub = None
@@ -184,7 +201,7 @@ def main(argv=sys.argv):
 if __name__ == "__main__":
     ret = None
     try:
-	ret = main()
+        ret = main()
     except (KeyboardInterrupt, SystemExit):
-	print >> sys.stderr, "%s: Interrupted, aborting." % prog
+        print >> sys.stderr, "%s: Interrupted, aborting." % prog
     sys.exit(ret)
