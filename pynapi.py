@@ -22,6 +22,7 @@ import sys
 import urllib
 import subprocess
 import tempfile
+import time
 import os
 import getopt
 
@@ -151,23 +152,38 @@ def main(argv=sys.argv):
         url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=other&kolejka=false&nick=&pass=&napios=%s" % \
             (languages[lang], d.hexdigest(), f(d.hexdigest()), os.name)
 
+        repeat = 3
         sub = None
         http_code = 200
-        try:
-            sub = urllib.urlopen(url)
-            if hasattr(sub, 'getcode'):
-                http_code = sub.getcode() 
-            sub = sub.read()
-        except (IOError, OSError), e:
-            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+        while repeat > 0:
+            repeat = repeat - 1
+            try:
+                sub = urllib.urlopen(url)
+                if hasattr(sub, 'getcode'):
+                    http_code = sub.getcode() 
+                sub = sub.read()
+            except (IOError, OSError), e:
+                print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+                time.sleep(0.5)
+                continue
+    
+            if http_code != 200:
+                print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
+                time.sleep(0.5)
+                continue
+    
+            if sub.startswith('NPc'):
+                print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
+                repeat = -1
+                continue
+
+            repeat = 0
+
+        if sub is None or sub == "":
+            print >> sys.stderr, "%s: %d/%d: Subtitle download FAILED" % (prog, i, i_total)
             continue
 
-        if http_code != 200:
-            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
-            continue
-
-        if sub.startswith('NPc'):
-            print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
+        if repeat == -1:
             continue
 
         fp = tempfile.NamedTemporaryFile('wb', suffix=".7z")
