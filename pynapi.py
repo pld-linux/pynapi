@@ -103,6 +103,10 @@ def main(argv=sys.argv):
             print >> sys.stderr, "%s: unhandled option" % prog
             return 1
 
+    if not args:
+        usage()
+        return 2
+
     print >> sys.stderr, "%s: Subtitles language `%s'. Finding video files..." % (prog, lang)
 
     files = []
