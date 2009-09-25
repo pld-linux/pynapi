@@ -18,11 +18,13 @@
 #
 
 
+import re
 import sys
 import urllib
 import subprocess
 import tempfile
 import time
+import urllib
 import os
 import getopt
 
@@ -68,6 +70,21 @@ def usage():
     print >> sys.stderr, "pynapi $Revision$"
     print >> sys.stderr
     print >> sys.stderr, "Report bugs to <arekm@pld-linux.org>."
+
+def get_desc_links(digest, file=None):
+    # improve me
+    re_link = re.compile(r'<a href=(http://.*?)>Zobacz opis filmu', re.IGNORECASE)
+    d = ""
+
+    try:
+        url = "http://www.napiprojekt.pl/index.php3?www=opis.php3&id=%s&film=%s" % (urllib.quote(digest), urllib.quote(file))
+        f = urllib.urlopen(url)
+        d = f.read()
+        f.close()
+    except Exception, e:
+        return False
+    return re_link.findall(d)
+
 
 def main(argv=sys.argv):
 
@@ -213,6 +230,10 @@ def main(argv=sys.argv):
         fp = open(vfile, 'w')
         fp.write(so)
         fp.close()
+
+        desc = get_desc_links(d.hexdigest(), file)
+        if desc:
+            print >> sys.stderr, "%s: %d/%d: Description at %s" % (prog, i, i_total, " , ".join(desc))
 
         print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
 
