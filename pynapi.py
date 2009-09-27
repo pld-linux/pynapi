@@ -233,7 +233,9 @@ def main(argv=sys.argv):
 
         desc = get_desc_links(d.hexdigest(), file)
         if desc:
-            print >> sys.stderr, "%s: %d/%d: Description at %s" % (prog, i, i_total, " , ".join(desc))
+            print >> sys.stderr, "%s: %d/%d: Description: " % (prog, i, i_total)
+            for desc_i in desc:
+                print >> sys.stderr, "\t\t%s" % desc_i
 
         print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
 
