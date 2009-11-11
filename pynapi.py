@@ -66,6 +66,7 @@ def usage():
     print >> sys.stderr, "     -l, --lang=LANG       subtitles language"
     print >> sys.stderr, "     -n, --nobackup        make no backup when in update mode"
     print >> sys.stderr, "     -u, --update          fetch new and also update existing subtitles"
+    print >> sys.stderr, "     -d, --dest=DIR        destination directory"
     print >> sys.stderr
     print >> sys.stderr, "pynapi $Revision$"
     print >> sys.stderr
@@ -89,7 +90,7 @@ def get_desc_links(digest, file=None):
 def main(argv=sys.argv):
 
     try:
-        opts, args = getopt.getopt(argv[1:], "hl:nu", ["help", "lang", "nobackup", "update"])
+        opts, args = getopt.getopt(argv[1:], "d:hl:nu", ["dest", "help", "lang", "nobackup", "update"])
     except getopt.GetoptError, err:
         print str(err)
         usage()
@@ -100,6 +101,7 @@ def main(argv=sys.argv):
     nobackup = False
     update = False
     lang = 'pl'
+    dest = None
     for o, a in opts:
         if o == "-v":
             verbose = True
@@ -116,6 +118,8 @@ def main(argv=sys.argv):
             nobackup = True
         elif o in ("-u", "--update"):
             update = True
+        elif o in ("-d", "--dest"):
+            dest = a
         else:
             print >> sys.stderr, "%s: unhandled option" % prog
             return 1
@@ -147,6 +151,8 @@ def main(argv=sys.argv):
         vfile = file + '.txt'
         if len(file) > 4:
             vfile = file[:-4] + '.txt'
+        if dest:
+            vfile = os.path.join(dest, os.path.split(vfile)[1])
 
         if not update and os.path.exists(vfile):
             continue
