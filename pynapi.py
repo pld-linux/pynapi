@@ -20,11 +20,11 @@
 
 import re
 import sys
-import urllib
+import mimetypes
+import urllib2
 import subprocess
 import tempfile
 import time
-import urllib
 import os
 import getopt
 
@@ -64,7 +64,7 @@ def usage():
     print >> sys.stderr, "Supported options:"
     print >> sys.stderr, "     -h, --help            display this help and exit"
     print >> sys.stderr, "     -l, --lang=LANG       subtitles language"
-    print >> sys.stderr, "     -n, --nobackup        make no backup when in update mode"
+    print >> sys.stderr, "     -n, --nobackup        make no subtitle backup when in update mode"
     print >> sys.stderr, "     -u, --update          fetch new and also update existing subtitles"
     print >> sys.stderr, "     -d, --dest=DIR        destination directory"
     print >> sys.stderr
@@ -78,14 +78,26 @@ def get_desc_links(digest, file=None):
     d = ""
 
     try:
-        url = "http://www.napiprojekt.pl/index.php3?www=opis.php3&id=%s&film=%s" % (urllib.quote(digest), urllib.quote(file))
-        f = urllib.urlopen(url)
+        url = "http://www.napiprojekt.pl/index.php3?www=opis.php3&id=%s&film=%s" % (urllib2.quote(digest), urllib2.quote(file))
+        f = urllib2.urlopen(url)
         d = f.read()
         f.close()
     except Exception, e:
         return False
     return re_link.findall(d)
 
+def get_cover(digest):
+    cover = ""
+    try:
+        url = "http://www.napiprojekt.pl/okladka_pobierz.php?id=%s&oceny=-1" % (urllib2.quote(digest))
+        f = urllib2.urlopen(url)
+        cover = f.read()
+        f.close()
+        content_type = f.info()['Content-Type']
+        extension = mimetypes.guess_all_extensions(content_type)[-1]
+    except Exception, e:
+        return False
+    return (cover, extension)
 
 def main(argv=sys.argv):
 
@@ -149,8 +161,10 @@ def main(argv=sys.argv):
         i += 1
 
         vfile = file + '.txt'
+        basefile = file
         if len(file) > 4:
-            vfile = file[:-4] + '.txt'
+            basefile = file[:-4]
+            vfile = basefile + '.txt'
         if dest:
             vfile = os.path.join(dest, os.path.split(vfile)[1])
 
@@ -185,7 +199,7 @@ def main(argv=sys.argv):
         while repeat > 0:
             repeat = repeat - 1
             try:
-                sub = urllib.urlopen(url)
+                sub = urllib2.urlopen(url)
                 if hasattr(sub, 'getcode'):
                     http_code = sub.getcode() 
                 sub = sub.read()
@@ -243,7 +257,16 @@ def main(argv=sys.argv):
             for desc_i in desc:
                 print >> sys.stderr, "\t\t%s" % desc_i
 
-        print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
+        cover_stored = ""
+        cover_data = get_cover(d.hexdigest())
+        if cover_data:
+            cover, extension = cover_data
+            fp = open(basefile + extension, 'w')
+            fp.write(cover)
+            fp.close()
+            cover_stored = ", %s COVER STORED (%d bytes)" % (extension, len(cover))
+
+        print >> sys.stderr, "%s: %d/%d: SUBTITLE STORED (%d bytes)%s" % (prog, i, i_total, len(so), cover_stored)
 
     return 0
 
