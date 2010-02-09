@@ -74,13 +74,14 @@ def usage():
 
 def get_desc_links(digest, file=None):
     # improve me
-    re_link = re.compile(r'<a href=(http://.*?)>Zobacz opis filmu', re.IGNORECASE)
+    re_link = re.compile(r'<a.*?href=\'(http://.*?)\'>', re.IGNORECASE)
     d = ""
 
     try:
         url = "http://www.napiprojekt.pl/index.php3?www=opis.php3&id=%s&film=%s" % (urllib2.quote(digest), urllib2.quote(file))
         f = urllib2.urlopen(url)
         d = f.read()
+        print d
         f.close()
     except Exception, e:
         return False

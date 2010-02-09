@@ -1,7 +1,7 @@
 Summary:	pynapi - Movie Subtitle Downloader
 Summary(pl.UTF-8):	pynapi - narzędzie do ściągania napisów do filmów
 Name:		pynapi
-Version:	0.13
+Version:	0.14
 Release:	1
 License:	GPL v3+
 Group:		Applications/Multimedia
