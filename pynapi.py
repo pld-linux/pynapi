@@ -81,7 +81,6 @@ def get_desc_links(digest, file=None):
         url = "http://www.napiprojekt.pl/index.php3?www=opis.php3&id=%s&film=%s" % (urllib2.quote(digest), urllib2.quote(file))
         f = urllib2.urlopen(url)
         d = f.read()
-        print d
         f.close()
     except Exception, e:
         return False
