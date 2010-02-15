@@ -22,8 +22,6 @@ import re
 import sys
 import mimetypes
 import urllib2
-import subprocess
-import tempfile
 import time
 import os
 import getopt
@@ -190,7 +188,7 @@ def main(argv=sys.argv):
             print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
             continue
 
-        url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=other&kolejka=false&nick=&pass=&napios=%s" % \
+        url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=dreambox&kolejka=false&nick=&pass=&napios=%s" % \
             (languages[lang], d.hexdigest(), f(d.hexdigest()), os.name)
 
         repeat = 3
@@ -227,28 +225,8 @@ def main(argv=sys.argv):
         if repeat == -1:
             continue
 
-        fp = tempfile.NamedTemporaryFile('wb', suffix=".7z")
-        tfp = fp.name
-        fp.write(sub)
-        fp.flush()
-
-        try:
-            cmd = ['/usr/bin/7z', 'x', '-y', '-so', '-p' + napipass, tfp]
-            sa = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-            (so, se) = sa.communicate(sub)
-            retcode = sa.returncode
-        except OSError, e:
-            se = e
-            retcode = True
-
-        fp.close()
-
-        if retcode:
-            print >> sys.stderr, "%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se)
-            continue
-
         fp = open(vfile, 'w')
-        fp.write(so)
+        fp.write(sub)
         fp.close()
 
         desc = get_desc_links(d.hexdigest(), file)
@@ -266,7 +244,7 @@ def main(argv=sys.argv):
             fp.close()
             cover_stored = ", %s COVER STORED (%d bytes)" % (extension, len(cover))
 
-        print >> sys.stderr, "%s: %d/%d: SUBTITLE STORED (%d bytes)%s" % (prog, i, i_total, len(so), cover_stored)
+        print >> sys.stderr, "%s: %d/%d: SUBTITLE STORED (%d bytes)%s" % (prog, i, i_total, len(sub), cover_stored)
 
     return 0
 
