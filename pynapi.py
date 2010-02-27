@@ -97,6 +97,45 @@ def get_cover(digest):
         return False
     return (cover, extension)
 
+def calculate_digest(file):
+    d = md5()
+    try:
+        d.update(open(file).read(10485760))
+    except (IOError, OSError), e:
+        print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
+        return None
+    return d.hexdigest()
+
+def get_subtitle(digest, lang="PL"):
+    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=dreambox&kolejka=false&nick=&pass=&napios=%s" % \
+        (lang, digest, f(digest), os.name)
+    repeat = 3
+    sub = None
+    http_code = 200
+    while repeat > 0:
+        repeat = repeat - 1
+        try:
+            sub = urllib2.urlopen(url)
+            if hasattr(sub, 'getcode'):
+                http_code = sub.getcode() 
+            sub = sub.read()
+        except (IOError, OSError), e:
+            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+            time.sleep(0.5)
+            continue
+    
+        if http_code != 200:
+            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
+            time.sleep(0.5)
+            continue
+    
+        if sub.startswith('NPc'):
+            print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
+            repeat = -1
+            continue
+
+    return sub
+
 def main(argv=sys.argv):
 
     try:
@@ -181,62 +220,29 @@ def main(argv=sys.argv):
 
         print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
-        d = md5()
-        try:
-            d.update(open(file).read(10485760))
-        except (IOError, OSError), e:
-            print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
+        digest = calculate_digest(file)
+        
+        if digest is None:
             continue
-
-        url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=dreambox&kolejka=false&nick=&pass=&napios=%s" % \
-            (languages[lang], d.hexdigest(), f(d.hexdigest()), os.name)
-
-        repeat = 3
-        sub = None
-        http_code = 200
-        while repeat > 0:
-            repeat = repeat - 1
-            try:
-                sub = urllib2.urlopen(url)
-                if hasattr(sub, 'getcode'):
-                    http_code = sub.getcode() 
-                sub = sub.read()
-            except (IOError, OSError), e:
-                print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
-                time.sleep(0.5)
-                continue
-    
-            if http_code != 200:
-                print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
-                time.sleep(0.5)
-                continue
-    
-            if sub.startswith('NPc'):
-                print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
-                repeat = -1
-                continue
-
-            repeat = 0
+    	
+    	sub = get_subtitle(digest, languages[lang])
 
         if sub is None or sub == "":
             print >> sys.stderr, "%s: %d/%d: Subtitle download FAILED" % (prog, i, i_total)
-            continue
-
-        if repeat == -1:
             continue
 
         fp = open(vfile, 'w')
         fp.write(sub)
         fp.close()
 
-        desc = get_desc_links(d.hexdigest(), file)
+        desc = get_desc_links(digest, file)
         if desc:
             print >> sys.stderr, "%s: %d/%d: Description: " % (prog, i, i_total)
             for desc_i in desc:
                 print >> sys.stderr, "\t\t%s" % desc_i
 
         cover_stored = ""
-        cover_data = get_cover(d.hexdigest())
+        cover_data = get_cover(digest)
         if cover_data:
             cover, extension = cover_data
             fp = open(basefile + extension, 'w')
