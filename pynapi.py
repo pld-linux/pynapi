@@ -102,8 +102,7 @@ def calculate_digest(file):
     try:
         d.update(open(file).read(10485760))
     except (IOError, OSError), e:
-        print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
-        return None
+        raise Exception('Hashing video file failed: %s' % ( e ))
     return d.hexdigest()
 
 def get_subtitle(digest, lang="PL"):
@@ -112,6 +111,7 @@ def get_subtitle(digest, lang="PL"):
     repeat = 3
     sub = None
     http_code = 200
+    error = "Fetching subtitle failed:"
     while repeat > 0:
         repeat = repeat - 1
         try:
@@ -120,20 +120,23 @@ def get_subtitle(digest, lang="PL"):
                 http_code = sub.getcode() 
             sub = sub.read()
         except (IOError, OSError), e:
-            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+            error = error + " %s" % (e)
             time.sleep(0.5)
             continue
     
         if http_code != 200:
-            print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
+            error = error + ",HTTP code: %s" % (str(http_code))
             time.sleep(0.5)
             continue
     
         if sub.startswith('NPc'):
-            print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
-            repeat = -1
-            continue
+    	    raise Exception('Subtitle NOT FOUND')
+    	    
+    	repeat = 0
 
+    if sub is None or sub == "":
+	raise Exception(error)
+	
     return sub
 
 def main(argv=sys.argv):
@@ -220,16 +223,12 @@ def main(argv=sys.argv):
 
         print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
-        digest = calculate_digest(file)
-        
-        if digest is None:
-            continue
-    	
-    	sub = get_subtitle(digest, languages[lang])
-
-        if sub is None or sub == "":
-            print >> sys.stderr, "%s: %d/%d: Subtitle download FAILED" % (prog, i, i_total)
-            continue
+	try:
+	    digest = calculate_digest(file)
+	    sub = get_subtitle(digest, languages[lang])
+	except:
+	    print >> sys.stderr, "%s: %d/%d: %s" % (prog, i, i_total, sys.exc_info()[1])
+	    continue
 
         fp = open(vfile, 'w')
         fp.write(sub)
