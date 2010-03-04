@@ -16,7 +16,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+# napiprojekt.pl API is used with napiproject administration consent
+# (given by Marek <kontakt@napiprojekt.pl> at Wed, 24 Feb 2010 14:43:00 +0100)
 
 import re
 import sys
@@ -106,7 +107,7 @@ def calculate_digest(file):
     return d.hexdigest()
 
 def get_subtitle(digest, lang="PL"):
-    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=dreambox&kolejka=false&nick=&pass=&napios=%s" % \
+    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=pynapi&kolejka=false&nick=&pass=&napios=%s" % \
         (lang, digest, f(digest), os.name)
     repeat = 3
     sub = None
