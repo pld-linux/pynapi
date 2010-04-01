@@ -73,7 +73,7 @@ def usage():
 
 def get_desc_links(digest, file=None):
     # improve me
-    re_link = re.compile(r'<a.*?href=\'(http://.*?)\'>', re.IGNORECASE)
+    re_link = re.compile(r'<a.*?href=[\'"](http://.*?)[ >\'"]', re.IGNORECASE)
     d = ""
 
     try:
@@ -83,7 +83,16 @@ def get_desc_links(digest, file=None):
         f.close()
     except Exception, e:
         return False
-    return re_link.findall(d)
+    links = re_link.findall(d)
+    ignore = [ r'.*napiprojekt\.pl.*', r'.*nokaut\.pl.*', r'.*rodisite\.com.*' ]
+    for i in range(0, len(ignore)):
+        ignore[i] = re.compile(ignore[i], re.IGNORECASE)
+    ilinks = links[:]
+    for l in ilinks:
+        for i in ignore:
+            if i.match(l):
+                links.remove(l)
+    return links
 
 def get_cover(digest):
     cover = ""
