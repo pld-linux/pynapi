@@ -131,13 +131,13 @@ def get_subtitle(digest, lang="PL"):
             continue
     
         if sub.startswith('NPc'):
-    	    raise Exception('Subtitle NOT FOUND')
-    	    
-    	repeat = 0
+            raise Exception('Subtitle NOT FOUND')
+            
+        repeat = 0
 
     if sub is None or sub == "":
-	raise Exception(error)
-	
+        raise Exception(error)
+
     return sub
 
 def main(argv=sys.argv):
@@ -224,23 +224,23 @@ def main(argv=sys.argv):
 
         print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
 
-	try:
-	    digest = calculate_digest(file)
-	    sub = get_subtitle(digest, languages[lang])
-	except:
-	    print >> sys.stderr, "%s: %d/%d: %s" % (prog, i, i_total, sys.exc_info()[1])
-	    continue
+        try:
+            digest = calculate_digest(file)
+            sub = get_subtitle(digest, languages[lang])
+        except:
+            print >> sys.stderr, "%s: %d/%d: %s" % (prog, i, i_total, sys.exc_info()[1])
+            continue
 
         fp = open(vfile, 'w')
         fp.write(sub)
         fp.close()
-
+    
         desc = get_desc_links(digest, file)
         if desc:
             print >> sys.stderr, "%s: %d/%d: Description: " % (prog, i, i_total)
             for desc_i in desc:
                 print >> sys.stderr, "\t\t%s" % desc_i
-
+   
         cover_stored = ""
         cover_data = get_cover(digest)
         if cover_data:
