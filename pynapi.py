@@ -240,7 +240,7 @@ def main(argv=sys.argv):
             print >> sys.stderr, "%s: %d/%d: %s" % (prog, i, i_total, sys.exc_info()[1])
             continue
 
-        fp = open(vfile, 'w')
+        fp = open(vfile, 'wb')
         fp.write(sub)
         fp.close()
     
