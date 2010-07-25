@@ -110,7 +110,7 @@ def get_cover(digest):
 def calculate_digest(file):
     d = md5()
     try:
-        d.update(open(file).read(10485760))
+        d.update(open(file, "rb").read(10485760))
     except (IOError, OSError), e:
         raise Exception('Hashing video file failed: %s' % ( e ))
     return d.hexdigest()
