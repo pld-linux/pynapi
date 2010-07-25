@@ -254,7 +254,7 @@ def main(argv=sys.argv):
         cover_data = get_cover(digest)
         if cover_data:
             cover, extension = cover_data
-            fp = open(basefile + extension, 'w')
+            fp = open(basefile + extension, 'wb')
             fp.write(cover)
             fp.close()
             cover_stored = ", %s COVER STORED (%d bytes)" % (extension, len(cover))
