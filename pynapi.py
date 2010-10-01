@@ -152,7 +152,7 @@ def get_subtitle(digest, lang="PL"):
 def main(argv=sys.argv):
 
     try:
-        opts, args = getopt.getopt(argv[1:], "d:hl:nu", ["dest", "help", "lang", "nobackup", "update"])
+        opts, args = getopt.getopt(argv[1:], "d:hl:nuc", ["dest", "help", "lang", "nobackup", "update", "nocover"])
     except getopt.GetoptError, err:
         print str(err)
         usage()
@@ -161,6 +161,7 @@ def main(argv=sys.argv):
     output = None
     verbose = False
     nobackup = False
+    nocover = False
     update = False
     lang = 'pl'
     dest = None
@@ -180,6 +181,8 @@ def main(argv=sys.argv):
             nobackup = True
         elif o in ("-u", "--update"):
             update = True
+        elif o in ("-c", "--nocover"):
+            nocover = True
         elif o in ("-d", "--dest"):
             dest = a
         else:
@@ -251,13 +254,14 @@ def main(argv=sys.argv):
                 print >> sys.stderr, "\t\t%s" % desc_i
    
         cover_stored = ""
-        cover_data = get_cover(digest)
-        if cover_data:
-            cover, extension = cover_data
-            fp = open(basefile + extension, 'wb')
-            fp.write(cover)
-            fp.close()
-            cover_stored = ", %s COVER STORED (%d bytes)" % (extension, len(cover))
+        if not nocover:
+            cover_data = get_cover(digest)
+            if cover_data:
+                cover, extension = cover_data
+                fp = open(basefile + extension, 'wb')
+                fp.write(cover)
+                fp.close()
+                cover_stored = ", %s COVER STORED (%d bytes)" % (extension, len(cover))
 
         print >> sys.stderr, "%s: %d/%d: SUBTITLE STORED (%d bytes)%s" % (prog, i, i_total, len(sub), cover_stored)
 
