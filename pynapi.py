@@ -64,6 +64,7 @@ def usage():
     print >> sys.stderr, "     -h, --help            display this help and exit"
     print >> sys.stderr, "     -l, --lang=LANG       subtitles language"
     print >> sys.stderr, "     -n, --nobackup        make no subtitle backup when in update mode"
+    print >> sys.stderr, "     -c, --nocover         do not download cover images"
     print >> sys.stderr, "     -u, --update          fetch new and also update existing subtitles"
     print >> sys.stderr, "     -d, --dest=DIR        destination directory"
     print >> sys.stderr
