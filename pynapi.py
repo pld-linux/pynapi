@@ -32,8 +32,6 @@ try:
 except ImportError:
     from md5 import md5
 
-napipass = 'iBlm8NTigvru0Jr0'
-
 prog = os.path.basename(sys.argv[0])
 
 video_files = [ 'asf', 'avi', 'divx', 'm2ts', 'mkv', 'mp4', 'mpeg', 'mpg', 'ogm', 'rm', 'rmvb', 'wmv' ]
