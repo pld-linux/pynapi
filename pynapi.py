@@ -138,7 +138,7 @@ def get_subtitle(digest, lang="PL"):
             time.sleep(0.5)
             continue
     
-        if sub.startswith('NPc') or sub.find('Blad polaczenia z baza danych') != -1:
+        if len(sub.split('\n')) < 20:
             raise Exception('Subtitle NOT FOUND')
             
         repeat = 0
