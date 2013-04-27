@@ -139,7 +139,7 @@ def get_subtitle(digest, lang="PL"):
             continue
    
         err_add = ''
-        if sub.startswith('NPc'):
+        if not sub.startswith('NPc'):
             err_add = " (unknown error)"
         if len(sub.split('\n')) < 20:
             raise Exception('Subtitle NOT FOUND%s' % err_add)
