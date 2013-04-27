@@ -137,9 +137,12 @@ def get_subtitle(digest, lang="PL"):
             error = error + ",HTTP code: %s" % (str(http_code))
             time.sleep(0.5)
             continue
-    
+   
+        err_add = ''
+        if sub.startswith('NPc'):
+            err_add = " (unknown error)"
         if len(sub.split('\n')) < 20:
-            raise Exception('Subtitle NOT FOUND')
+            raise Exception('Subtitle NOT FOUND%s' % err_add)
             
         repeat = 0
 
