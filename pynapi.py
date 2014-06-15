@@ -83,11 +83,16 @@ def get_desc_links(digest, file=None):
     except Exception, e:
         return False
     links = re_link.findall(d)
-    ignore = [ r'.*napiprojekt\.pl.*', r'.*nokaut\.pl.*', r'.*rodisite\.com.*' ]
+    ignore = [ r'.*dobreprogramy\.pl', r'.*napiprojekt\.pl.*', r'.*nokaut\.pl.*', r'.*rodisite\.com.*' ]
     for i in range(0, len(ignore)):
         ignore[i] = re.compile(ignore[i], re.IGNORECASE)
     ilinks = links[:]
     for l in ilinks:
+        # main pages are useless
+        if l.count('/') < 3:
+            links.remove(l)
+            continue
+        # blacklisted sites
         for i in ignore:
             if i.match(l):
                 links.remove(l)
