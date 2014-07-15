@@ -26,6 +26,7 @@ import urllib2
 import time
 import os
 import getopt
+import socket
 
 try:
     from hashlib import md5 as md5
@@ -201,6 +202,8 @@ def main(argv=sys.argv):
         return 2
 
     print >> sys.stderr, "%s: Subtitles language `%s'. Finding video files..." % (prog, lang)
+
+    socket.setdefaulttimeout(180)
 
     files = []
     for arg in args:
