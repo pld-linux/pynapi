@@ -352,7 +352,6 @@ def main(argv=sys.argv):
             continue
 
         try:
-            raise
             sub = get_subtitle_napiprojekt(digest, languages[lang])
         except:
             try:
