@@ -1,8 +1,8 @@
 Summary:	pynapi - Movie Subtitle Downloader
 Summary(pl.UTF-8):	pynapi - narzędzie do ściągania napisów do filmów
 Name:		pynapi
-Version:	0.18
-Release:	7
+Version:	0.20
+Release:	1
 License:	GPL v3+
 Group:		Applications/Multimedia
 Source0:	pynapi.py
@@ -13,11 +13,11 @@ BuildArch:	noarch
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
-Command line NAPI-PROJEKT subtitles downloader.
+Command line NAPI-PROJEKT and NAPISY24 subtitles downloader.
 
 %description -l pl.UTF-8
 Obsługiwane z linii poleceń narzędzie do ściągania napisów z projektu
-NAPI.
+NAPI oraz NAPISY24.
 
 %prep
 %setup -q -c -T

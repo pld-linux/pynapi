@@ -18,15 +18,22 @@
 #
 # napiprojekt.pl API is used with napiproject administration consent
 # (given by Marek <kontakt@napiprojekt.pl> at Wed, 24 Feb 2010 14:43:00 +0100)
+#
+# napisy24.pl API access granted by napisy24 admins at 15 Feb 2015
+#
 
+import StringIO
 import re
 import sys
 import mimetypes
+import urllib
 import urllib2
 import time
 import os
 import getopt
 import socket
+import struct
+import zipfile
 
 try:
     from hashlib import md5 as md5
@@ -38,7 +45,15 @@ prog = os.path.basename(sys.argv[0])
 video_files = [ 'asf', 'avi', 'divx', 'm2ts', 'mkv', 'mp4', 'mpeg', 'mpg', 'ogm', 'rm', 'rmvb', 'wmv' ]
 languages = { 'pl': 'PL', 'en': 'ENG' }
 
-def f(z):
+def calculate_digest(filename):
+    d = md5()
+    try:
+        d.update(open(filename, "rb").read(10485760))
+    except (IOError, OSError), e:
+        raise Exception('Hashing video file failed: %s' % ( e ))
+    return d.hexdigest()
+
+def napiprojekt_hash(z):
     idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
     mul = [   2,   2,    5,   4,   3 ]
     add = [   0, 0xd, 0x10, 0xb, 0x5 ]
@@ -55,9 +70,43 @@ def f(z):
 
     return ''.join(b)
 
+def napisy24_hash(filename): 
+    try: 
+        longlongformat = '<q'  # little-endian long long
+        bytesize = struct.calcsize(longlongformat)
+
+        f = open(filename, "rb")
+
+        filesize = os.path.getsize(filename)
+        hash = filesize
+
+        if filesize < 65536 * 2:
+            raise Exception('Hashing (napisy24) video file failed: `%s\': File too small' % ( filename ))
+
+        for x in range(65536/bytesize): 
+            buffer = f.read(bytesize) 
+            (l_value,)= struct.unpack(longlongformat, buffer)  
+            hash += l_value 
+            hash = hash & 0xFFFFFFFFFFFFFFFF #to remain as 64bit number  
+
+
+        f.seek(max(0,filesize-65536),0) 
+        for x in range(65536/bytesize): 
+            buffer = f.read(bytesize) 
+            (l_value,)= struct.unpack(longlongformat, buffer)  
+            hash += l_value 
+            hash = hash & 0xFFFFFFFFFFFFFFFF 
+
+        f.close() 
+        returnedhash =  "%016x" % hash 
+        return returnedhash 
+
+    except IOError, e:
+        raise Exception('Hashing (napisy24) video file failed: %s' % ( e ))
+
 def usage():
     print >> sys.stderr, "Usage: %s [OPTIONS]... [FILE|DIR]..." % prog
-    print >> sys.stderr, "Find video files and download matching subtitles from napiprojekt server."
+    print >> sys.stderr, "Find video files and download matching subtitles from napiprojekt/napisy24 server."
     print >> sys.stderr
     print >> sys.stderr, "Supported options:"
     print >> sys.stderr, "     -h, --help            display this help and exit"
@@ -66,8 +115,6 @@ def usage():
     print >> sys.stderr, "     -c, --nocover         do not download cover images"
     print >> sys.stderr, "     -u, --update          fetch new and also update existing subtitles"
     print >> sys.stderr, "     -d, --dest=DIR        destination directory"
-    print >> sys.stderr
-    print >> sys.stderr, "pynapi $Revision$"
     print >> sys.stderr
     print >> sys.stderr, "Report bugs to <arekm@pld-linux.org>."
 
@@ -112,21 +159,73 @@ def get_cover(digest):
         return False
     return (cover, extension)
 
-def calculate_digest(file):
-    d = md5()
-    try:
-        d.update(open(file, "rb").read(10485760))
-    except (IOError, OSError), e:
-        raise Exception('Hashing video file failed: %s' % ( e ))
-    return d.hexdigest()
+def get_subtitle_napisy24(filename, digest=False, lang="pl"):
+    url = "http://napisy24.pl/run/CheckSubAgent.php"
 
-def get_subtitle(digest, lang="PL"):
+    pdata = []
+    pdata.append(('postAction', 'CheckSub'))
+    pdata.append(('ua', 'pynapi'))
+    pdata.append(('ap', 'XaA!29OkF5Pe'))
+    pdata.append(('nl', lang))
+    pdata.append(('fn', filename))
+    pdata.append(('fh', napisy24_hash(filename)))
+    pdata.append(('fs', os.path.getsize(filename)))
+    if digest:
+        pdata.append(('md5', digest))
+
+    repeat = 3
+    error = "Fetching subtitle (napisy24) failed:"
+    while repeat > 0:
+        repeat = repeat - 1
+        try:
+            sub = urllib2.urlopen(url, data=urllib.urlencode(pdata))
+            if hasattr(sub, 'getcode'):
+                http_code = sub.getcode() 
+            sub = sub.read()
+        except (IOError, OSError), e:
+            error = error + " %s" % (e)
+            time.sleep(0.5)
+            continue
+
+        if http_code != 200:
+            error = error + ",HTTP code: %s" % (str(http_code))
+            time.sleep(0.5)
+            continue
+
+        err_add = ''
+        if sub.startswith('OK-2|'):
+            pos = sub.find('||')
+            if pos >= 2 and len(sub) > (pos + 2):
+                sub = sub[pos+2:]
+
+                try:  
+                    subzip=zipfile.ZipFile(StringIO.StringIO(sub))
+                    sub=''
+                    for name in subzip.namelist():
+                        sub += subzip.read(name)
+                except Exception, e:
+                    raise Exception('Subtitle NOT FOUND%s' % e)
+            else:
+                raise Exception('Subtitle NOT FOUND (subtitle too short)')
+        elif sub.startswith('OK-'):
+            raise Exception('Subtitle NOT FOUND')
+        else:
+            raise Exception('Subtitle NOT FOUND (unknown error)')
+
+        repeat = 0
+
+    if sub is None or sub == "":
+        raise Exception(error)
+
+    return sub
+
+def get_subtitle_napiprojekt(digest, lang="PL"):
     url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=pynapi&kolejka=false&nick=&pass=&napios=%s" % \
-        (lang, digest, f(digest), os.name)
+        (lang, digest, napiprojekt_hash(digest), os.name)
     repeat = 3
     sub = None
     http_code = 200
-    error = "Fetching subtitle failed:"
+    error = "Fetching subtitle (napiprojekt) failed:"
     while repeat > 0:
         repeat = repeat - 1
         try:
@@ -248,10 +347,19 @@ def main(argv=sys.argv):
 
         try:
             digest = calculate_digest(file)
-            sub = get_subtitle(digest, languages[lang])
         except:
             print >> sys.stderr, "%s: %d/%d: %s" % (prog, i, i_total, sys.exc_info()[1])
             continue
+
+        try:
+            raise
+            sub = get_subtitle_napiprojekt(digest, languages[lang])
+        except:
+            try:
+                sub = get_subtitle_napisy24(file, digest, lang)
+            except:
+                print >> sys.stderr, "%s: %d/%d: %s" % (prog, i, i_total, sys.exc_info()[1])
+                continue
 
         fp = open(vfile, 'wb')
         fp.write(sub)
