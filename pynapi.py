@@ -160,7 +160,7 @@ def get_cover(digest):
     return (cover, extension)
 
 def get_subtitle_napisy24(filename, digest=False, lang="pl"):
-    raise StandardError
+    raise Exception('Subtitle NOT FOUND')
 
     url = "http://napisy24.pl/run/CheckSubAgent.php"
 
