@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 #
-#  Copyright (C) 2009 Arkadiusz Miśkiewicz <arekm@pld-linux.org>
+#  Copyright (C) 2009-2015 Arkadiusz Miśkiewicz <arekm@pld-linux.org>
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #
 
 import StringIO
+import base64
 import re
 import sys
 import mimetypes
@@ -33,6 +34,7 @@ import os
 import getopt
 import socket
 import struct
+import xml.etree.ElementTree as etree
 import zipfile
 
 try:
@@ -52,23 +54,6 @@ def calculate_digest(filename):
     except (IOError, OSError), e:
         raise Exception('Hashing video file failed: %s' % ( e ))
     return d.hexdigest()
-
-def napiprojekt_hash(z):
-    idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
-    mul = [   2,   2,    5,   4,   3 ]
-    add = [   0, 0xd, 0x10, 0xb, 0x5 ]
-
-    b = []
-    for i in xrange(len(idx)):
-        a = add[i]
-        m = mul[i]
-        i = idx[i]
-
-        t = a + int(z[i], 16)
-        v = int(z[t:t+2], 16)
-        b.append( ("%x" % (v*m))[-1] )
-
-    return ''.join(b)
 
 def napisy24_hash(filename): 
     try: 
@@ -222,8 +207,16 @@ def get_subtitle_napisy24(filename, digest=False, lang="pl"):
     return sub
 
 def get_subtitle_napiprojekt(digest, lang="PL"):
-    url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=pynapi&kolejka=false&nick=&pass=&napios=%s" % \
-        (lang, digest, napiprojekt_hash(digest), os.name)
+    data = {
+            "downloaded_subtitles_id" : digest,
+            "mode" : "1",
+            "client" : "pynapi",
+            "client_ver": "0",
+            "downloaded_subtitles_lang" : lang,
+            "downloaded_subtitles_txt" : "1"
+            }
+
+    req = urllib2.Request("http://napiprojekt.pl/api/api-napiprojekt3.php", urllib.urlencode(data))
     repeat = 3
     sub = None
     http_code = 200
@@ -231,10 +224,10 @@ def get_subtitle_napiprojekt(digest, lang="PL"):
     while repeat > 0:
         repeat = repeat - 1
         try:
-            sub = urllib2.urlopen(url)
+            subdata = urllib2.urlopen(req)
             if hasattr(sub, 'getcode'):
-                http_code = sub.getcode() 
-            sub = sub.read()
+                http_code = subdata.getcode() 
+            subdata = subdata.read()
         except (IOError, OSError), e:
             error = error + " %s" % (e)
             time.sleep(0.5)
@@ -244,14 +237,20 @@ def get_subtitle_napiprojekt(digest, lang="PL"):
             error = error + ",HTTP code: %s" % (str(http_code))
             time.sleep(0.5)
             continue
-   
-        err_add = ''
-        if not sub.startswith('NPc'):
-            err_add = " (unknown error)"
-        if len(sub.split('\n')) < 20:
-            raise Exception('Subtitle NOT FOUND%s' % err_add)
-            
-        repeat = 0
+
+        try:
+            root = etree.fromstring(subdata)
+            status = root.find('status')
+            if status is not None and status.text == "success":
+                content = root.find('subtitles/content')
+                sub = base64.b64decode(content.text)
+                break
+            else:
+                raise Exception('Subtitle NOT FOUND')
+        except Exception, e:
+            error = error + ",XML parsing: %s" % e
+            time.sleep(0.5)
+            continue
 
     if sub is None or sub == "":
         raise Exception(error)
